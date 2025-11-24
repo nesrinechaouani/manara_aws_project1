@@ -2,8 +2,7 @@
 
 This project demonstrates a **highly available and scalable PHP web application** deployed on AWS. It uses EC2 instances behind an Application Load Balancer (ALB), an Auto Scaling Group (ASG), and an optional Multi-AZ RDS MySQL database for backend storage.
 
-<img width="1338" height="405" alt="diagram-export-24-11-2025-17_28_43" src="https://github.com/user-attachments/assets/ea8b7bd1-a1d0-4f31-a31f-d3edd577313c" />
-
+![Architecture Diagram](Architecture_Diagram.png)
 ---
 
 ## Architecture Overview
