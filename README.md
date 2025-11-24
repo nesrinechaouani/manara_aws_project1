@@ -1,35 +1,41 @@
 # Scalable Web Application with ALB, Auto Scaling, and RDS
 
-This project demonstrates a **highly available and scalable PHP web application** deployed on AWS. It uses EC2 instances behind an Application Load Balancer (ALB), an Auto Scaling Group (ASG), and an optional Multi-AZ RDS MySQL database for backend storage.
+This project demonstrates a **secure, highly available, and scalable PHP web application** deployed on AWS. It uses EC2 instances in **private subnets** behind an Application Load Balancer (ALB), an Auto Scaling Group (ASG), and a Multi-AZ RDS MySQL database for backend storage. Database credentials are securely stored in **Secrets Manager**.
 
 ![Architecture Diagram](Architecture_Diagram.png)
 ---
 
+---
+
 ## Architecture Overview
 
+This infrastructure includes:
+
 1. **VPC & Subnets**  
-   - Two **public subnets** for ALB and EC2 instances.  
-   - Two **private subnets** for RDS database.  
+   - **Public subnets** → ALB, internet-facing.  
+   - **Private subnets** → EC2 application servers, isolated from direct internet access.  
+   - **Private subnets** → RDS database for enhanced security.
 
 2. **EC2 Auto Scaling Group**  
-   - Launches EC2 instances running Apache and PHP automatically via user data.  
-   - Auto Scaling adjusts the number of instances based on traffic.  
+   - Launches EC2 instances automatically in private subnets.  
+   - Auto Scaling adjusts the number of instances based on demand.  
 
 3. **Application Load Balancer (ALB)**  
-   - Distributes incoming HTTP traffic across EC2 instances.  
-   - Monitors health of instances via a target group.  
+   - Public-facing load balancer distributes incoming HTTP traffic to private EC2 instances.  
+   - Health checks ensure traffic is routed only to healthy instances.
 
 4. **Amazon RDS (Multi-AZ)**  
    - MySQL database in private subnets.  
-   - EC2 instances connect securely using a security group and credentials stored in **Secrets Manager**.  
+   - Multi-AZ deployment ensures high availability.  
+   - EC2 instances connect securely via a security group.
 
 5. **Secrets Manager**  
    - Stores database credentials securely.  
-   - EC2 user-data retrieves the credentials on startup.  
+   - EC2 instances fetch credentials dynamically on startup.  
 
-6. **CloudWatch & IAM**  
-   - IAM roles allow EC2 instances to access AWS resources.  
-   - CloudWatch can monitor metrics and send alerts via SNS (optional).  
+6. **IAM Roles & Security**  
+   - EC2 instances have an IAM role to access Secrets Manager and CloudWatch.  
+   - Security groups ensure ALB → EC2 → RDS traffic flow.  
 
 ---
 
@@ -37,18 +43,14 @@ This project demonstrates a **highly available and scalable PHP web application*
 
 The PHP application (`index.php`) deployed on EC2:
 
-- Connects to the RDS database.  
+- Connects to the RDS database using credentials from Secrets Manager.  
 - Creates a `visitors` table if it does not exist.  
 - Logs each page visit.  
-- Displays the total number of visits and the hostname of the serving EC2 instance.  
+- Displays total visits and the hostname of the serving EC2 instance.  
 
-This allows you to **test load balancing**, as multiple instances behind the ALB increment the visitor count separately.
+This allows you to **observe load balancing**, as multiple EC2 instances increment visitor counts independently.
 
----
-
-### Local Testing (Optional)
-
-You can run the PHP app locally for quick testing:
+You can optionally run the PHP app locally for quick testing:
 
 ```bash
 php -S localhost:8080 -t app/
@@ -71,13 +73,17 @@ aws cloudformation deploy \
 
 - EC2 instances run Amazon Linux 2 with Apache and PHP installed via user data.
 
+- Instances reside in private subnets for enhanced security.
+
 - Auto Scaling ensures high availability and scales EC2 instances based on demand.
 
 - RDS is deployed in Multi-AZ mode for resilience.
 
-- The PHP app automatically retrieves DB credentials from Secrets Manager.
+- The PHP app retrieves database credentials securely from Secrets Manager.
 
-- For production, the PHP code can be hosted in S3 or Git, allowing updates without modifying the template.
+- The ALB in public subnets exposes the application safely without exposing EC2 directly.
+
+- For production, PHP code can be deployed from S3 or Git, allowing updates without modifying the template.
 ---
 ### License
 
